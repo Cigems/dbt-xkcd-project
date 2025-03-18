@@ -1,0 +1,205 @@
+version: 2
+
+models:
+  # -------------------------------
+  # DIM_COMICS (Dimension Table)
+  # -------------------------------
+  - name: dim_comics
+    description: "Dimension table containing comic metadata."
+    tests:
+      - unique:
+          column_name: "comic_id"  # Ensuring one row per comic
+
+    columns:
+      - name: comic_id
+        description: "Unique identifier for a comic."
+        tests:
+          - not_null
+          - unique
+
+      - name: title
+        description: "Title of the comic."
+        tests:
+          - not_null
+
+      - name: title_len
+        description: "Length of the title."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+
+      - name: cost
+        description: "Cost calculation based on title length (title_len * 5)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: publish_date
+        description: "Date the comic was published."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"  # Ensuring YYYY-MM-DD format
+
+      - name: publish_day
+        description: "Weekday the comic was published."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+      - name: publish_year
+        description: "Year of publication."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 2000
+              max_value: 2050
+
+      - name: publish_month
+        description: "Month of publication (1-12)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 12
+
+  # -----------------------------------
+  # FACT_COMIC_STATS (Daily Metrics)
+  # -----------------------------------
+  - name: fact_comic_stats
+    description: "Daily trend analysis of comics based on views and reviews."
+    tests:
+      - unique:
+          column_name: "(comic_id || '-' || record_date)"  # Ensuring no duplicate comic-date records
+
+    columns:
+      - name: comic_id
+        description: "Foreign key to dim_comics."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_comics')
+              field: comic_id
+
+      - name: record_date
+        description: "Date of the record."
+        tests:
+          - not_null
+
+      - name: publish_day_flag
+        description: "Flag indicating if the comic was published on a Mon/Wed/Fri."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: [0, 1]
+
+      - name: views
+        description: "Number of views per day."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: reviews
+        description: "Number of reviews per day."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: days_since_published
+        description: "Days since the comic was published."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: views_since_published
+        description: "Total views since publication."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: avg_reviews_since_published
+        description: "Average reviews since publication."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+  # --------------------------------------
+  # FACT_COMIC_PERFORMANCE (Aggregated)
+  # --------------------------------------
+  - name: fact_comic_performance
+    description: "Aggregated performance metrics for comics."
+    tests:
+      - unique:
+          column_name: "comic_id"  # Ensuring one row per comic
+
+    columns:
+      - name: comic_id
+        description: "Foreign key to dim_comics."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_comics')
+              field: comic_id
+
+      - name: first_seen_day
+        description: "Days after publishing when the comic was first viewed."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: last_seen_day
+        description: "Days after publishing when the comic was last viewed."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: days_since_published
+        description: "Days since the comic was published."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: views_7d
+        description: "Total views in the first 7 days."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: views_30d
+        description: "Total views in the first 30 days."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: views_60d
+        description: "Total views in the first 60 days."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: views_90d
+        description: "Total views in the first 90 days."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: avg_reviews_7d
+        description: "Average reviews in the first 7 days."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: avg_reviews_30d
+        description: "Average reviews in the first 30 days."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: avg_reviews_60d
+        description: "Average reviews in the first 60 days."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: avg_reviews_90d
+        description: "Average reviews in the first 90 days."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
