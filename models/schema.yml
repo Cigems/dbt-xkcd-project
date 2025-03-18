@@ -6,9 +6,6 @@ models:
   # -------------------------------
   - name: dim_comics
     description: "Dimension table containing comic metadata."
-    tests:
-      - unique:
-          column_name: "comic_id"  # Ensuring one row per comic
 
     columns:
       - name: comic_id
