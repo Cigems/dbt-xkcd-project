@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: analytics  # Logical name for your schema
+    database: XKCD_DB  # Snowflake database
+    schema: "{{ env_var('DBT_ANALYTICS_SCHEMA', 'ANALYTICS') }}"  # Schema from environment variable
+    tables:
+      - name: comics
+      - name: comics_stats
+
